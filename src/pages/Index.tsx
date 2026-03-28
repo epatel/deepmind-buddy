@@ -2,7 +2,9 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus } from "lucide-react";
+import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus, QrCode } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import qrCodeImage from "@/assets/qr-code.png";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -202,6 +204,8 @@ const Index = () => {
     if (refImageInputRef.current) refImageInputRef.current.value = "";
   };
 
+  const [showQr, setShowQr] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -214,6 +218,9 @@ const Index = () => {
             <h1 className="text-xl font-bold text-foreground tracking-tight">HairSwap AI</h1>
             <p className="text-xs text-muted-foreground">Powered by Google AI</p>
           </div>
+          <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setShowQr(true)}>
+            <QrCode className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
@@ -575,6 +582,12 @@ const Index = () => {
           )}
         </div>
       </main>
+      <Dialog open={showQr} onOpenChange={setShowQr}>
+        <DialogContent className="sm:max-w-xs flex flex-col items-center gap-4">
+          <DialogTitle className="text-center text-foreground">Scan QR Code</DialogTitle>
+          <img src={qrCodeImage} alt="QR Code" className="w-full max-w-[240px]" />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
