@@ -525,6 +525,43 @@ const Index = () => {
             </Button>
           )}
         </div>
+
+        {/* Result */}
+        <div className="max-w-md mx-auto space-y-4">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+            Result
+          </h3>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              {resultImage ? (
+                <img
+                  src={resultImage}
+                  alt="Transformed hairstyle"
+                  className="w-full aspect-square object-cover"
+                />
+              ) : (
+                <div className="aspect-square flex flex-col items-center justify-center gap-4 bg-muted/30">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                    <Sparkles className="h-7 w-7 text-muted-foreground" />
+                  </div>
+                  <div className="text-center px-8">
+                    <p className="font-medium text-foreground">Your new look appears here</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Upload a photo and pick a style to get started
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {resultImage && (
+            <Button variant="outline" className="w-full" onClick={handleDownload}>
+              <Download className="h-4 w-4" />
+              Download Result
+            </Button>
+          )}
+        </div>
       </main>
     </div>
   );
