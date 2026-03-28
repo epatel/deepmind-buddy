@@ -175,6 +175,7 @@ const Index = () => {
     setUploadedImage(null);
     setResultImage(null);
     setSelectedStyle(null);
+    setSelectedColor(null);
     setCustomPrompt("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
