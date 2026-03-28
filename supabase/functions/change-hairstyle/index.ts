@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, hairstyle, hairColor, colorTechnique, customPrompt } = await req.json();
+    const { imageBase64, hairstyle, hairColor, colorTechnique, referenceImage, customPrompt } = await req.json();
 
     if (!imageBase64) {
       return new Response(
@@ -29,9 +29,25 @@ serve(async (req) => {
     const colorInstruction = hairColor ? ` Change the hair color to ${hairColor}.` : "";
     const techniqueInstruction = colorTechnique ? ` Apply a ${colorTechnique} coloring technique.` : "";
 
-    const prompt = customPrompt
-      ? `Change this person's hairstyle to: ${customPrompt}.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`
-      : `Change this person's hairstyle to a ${hairstyle} style.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`;
+    let prompt: string;
+    const contentParts: any[] = [];
+
+    if (referenceImage) {
+      prompt = `Look at the second image — it shows a reference hairstyle. Apply that exact hairstyle to the person in the first image.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle. Make it look natural and realistic.`;
+      contentParts.push(
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: imageBase64 } },
+        { type: "image_url", image_url: { url: referenceImage } }
+      );
+    } else {
+      prompt = customPrompt
+        ? `Change this person's hairstyle to: ${customPrompt}.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`
+        : `Change this person's hairstyle to a ${hairstyle} style.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`;
+      contentParts.push(
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: imageBase64 } }
+      );
+    }
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -46,13 +62,7 @@ serve(async (req) => {
           messages: [
             {
               role: "user",
-              content: [
-                { type: "text", text: prompt },
-                {
-                  type: "image_url",
-                  image_url: { url: imageBase64 },
-                },
-              ],
+              content: contentParts,
             },
           ],
           modalities: ["image", "text"],

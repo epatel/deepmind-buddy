@@ -269,7 +269,82 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Hair Color Selection */}
+        {/* Reference Image */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Or Copy From a Photo <span className="text-muted-foreground font-normal normal-case">(optional)</span>
+            </h3>
+            {referenceImage && (
+              <button
+                onClick={() => { setReferenceImage(null); if (refImageInputRef.current) refImageInputRef.current.value = ""; }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {referenceImage ? (
+            <div className="flex items-start gap-4">
+              <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-primary shrink-0">
+                <img src={referenceImage} alt="Reference hairstyle" className="w-full h-full object-cover" />
+                <button
+                  onClick={() => { setReferenceImage(null); if (refImageInputRef.current) refImageInputRef.current.value = ""; }}
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-foreground/70 text-background flex items-center justify-center hover:bg-foreground transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground pt-2">
+                The AI will try to replicate this hairstyle on your photo.
+              </p>
+            </div>
+          ) : (
+            <div
+              className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors cursor-pointer"
+              onClick={() => refImageInputRef.current?.click()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith("image/")) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    setReferenceImage(ev.target?.result as string);
+                    setSelectedStyle(null);
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+              onDragOver={(e) => e.preventDefault()}
+            >
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center shrink-0">
+                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground text-sm">Drop a reference photo here</p>
+                <p className="text-xs text-muted-foreground">Upload a photo of the hairstyle you want to copy</p>
+              </div>
+            </div>
+          )}
+          <input
+            ref={refImageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                setReferenceImage(ev.target?.result as string);
+                setSelectedStyle(null);
+              };
+              reader.readAsDataURL(file);
+            }}
+          />
+        </div>
+
+
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
