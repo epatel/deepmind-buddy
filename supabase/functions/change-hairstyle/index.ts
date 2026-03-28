@@ -6,6 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function base64ToGeminiPart(dataUrl: string) {
+  // dataUrl can be "data:image/jpeg;base64,..." or raw base64
+  if (dataUrl.startsWith("data:")) {
+    const match = dataUrl.match(/^data:(.+?);base64,(.+)$/s);
+    if (match) {
+      return { inline_data: { mime_type: match[1], data: match[2] } };
+    }
+  }
+  // Assume JPEG if no prefix
+  return { inline_data: { mime_type: "image/jpeg", data: dataUrl } };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,54 +33,47 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
+    if (!GOOGLE_API_KEY) {
+      throw new Error("GOOGLE_API_KEY is not configured");
     }
 
     const colorInstruction = hairColor ? ` Change the hair color to ${hairColor}.` : "";
     const techniqueInstruction = colorTechnique ? ` Apply a ${colorTechnique} coloring technique.` : "";
 
     let prompt: string;
-    const contentParts: any[] = [];
+    const parts: any[] = [];
 
     if (referenceImage) {
       prompt = `Look at the second image — it shows a reference hairstyle. Apply that exact hairstyle to the person in the first image.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle. Make it look natural and realistic.`;
-      contentParts.push(
-        { type: "text", text: prompt },
-        { type: "image_url", image_url: { url: imageBase64 } },
-        { type: "image_url", image_url: { url: referenceImage } }
+      parts.push(
+        { text: prompt },
+        base64ToGeminiPart(imageBase64),
+        base64ToGeminiPart(referenceImage)
       );
     } else {
       prompt = customPrompt
         ? `Change this person's hairstyle to: ${customPrompt}.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`
         : `Change this person's hairstyle to a ${hairstyle} style.${colorInstruction}${techniqueInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`;
-      contentParts.push(
-        { type: "text", text: prompt },
-        { type: "image_url", image_url: { url: imageBase64 } }
+      parts.push(
+        { text: prompt },
+        base64ToGeminiPart(imageBase64)
       );
     }
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
+    const model = "gemini-2.0-flash-exp";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
         },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
-          messages: [
-            {
-              role: "user",
-              content: contentParts,
-            },
-          ],
-          modalities: ["image", "text"],
-        }),
-      }
-    );
+      }),
+    });
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -77,14 +82,8 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add funds in Settings → Workspace → Usage." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       const text = await response.text();
-      console.error("AI gateway error:", response.status, text);
+      console.error("Gemini API error:", response.status, text);
       return new Response(
         JSON.stringify({ error: "AI processing failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -92,8 +91,20 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    const resultImage = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    const resultText = data.choices?.[0]?.message?.content;
+    const responseParts = data.candidates?.[0]?.content?.parts || [];
+
+    // Find the image part in the response
+    let resultImage: string | null = null;
+    let resultText = "";
+
+    for (const part of responseParts) {
+      if (part.inline_data) {
+        const mime = part.inline_data.mime_type || "image/png";
+        resultImage = `data:${mime};base64,${part.inline_data.data}`;
+      } else if (part.text) {
+        resultText += part.text;
+      }
+    }
 
     if (!resultImage) {
       return new Response(
