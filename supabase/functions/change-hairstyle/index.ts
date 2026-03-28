@@ -11,11 +11,50 @@ function base64ToGeminiPart(dataUrl: string) {
   if (dataUrl.startsWith("data:")) {
     const match = dataUrl.match(/^data:(.+?);base64,(.+)$/s);
     if (match) {
-      return { inline_data: { mime_type: match[1], data: match[2] } };
+      return { inlineData: { mimeType: match[1], data: match[2] } };
     }
   }
   // Assume JPEG if no prefix
-  return { inline_data: { mime_type: "image/jpeg", data: dataUrl } };
+  return { inlineData: { mimeType: "image/jpeg", data: dataUrl } };
+}
+
+const IMAGE_MODELS = [
+  "gemini-3.1-flash-image-preview",
+  "gemini-3-pro-image-preview",
+  "gemini-2.5-flash-image",
+] as const;
+
+async function callGeminiWithFallback(parts: any[], apiKey: string) {
+  let lastStatus = 0;
+  let lastBody = "";
+
+  for (const model of IMAGE_MODELS) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      }),
+    });
+
+    if (response.status === 404) {
+      lastStatus = 404;
+      lastBody = await response.text();
+      console.warn(`Gemini model unavailable: ${model}`);
+      continue;
+    }
+
+    return { response, model };
+  }
+
+  throw new Error(`No supported Gemini image model found. Last status: ${lastStatus}. Last body: ${lastBody}`);
 }
 
 serve(async (req) => {
@@ -61,19 +100,7 @@ serve(async (req) => {
       );
     }
 
-    const model = "gemini-2.0-flash-exp-image-generation";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GOOGLE_API_KEY}`;
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-        },
-      }),
-    });
+    const { response, model } = await callGeminiWithFallback(parts, GOOGLE_API_KEY);
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -83,7 +110,7 @@ serve(async (req) => {
         );
       }
       const text = await response.text();
-      console.error("Gemini API error:", response.status, text);
+      console.error(`Gemini API error (${model}):`, response.status, text);
       return new Response(
         JSON.stringify({ error: "AI processing failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -98,9 +125,10 @@ serve(async (req) => {
     let resultText = "";
 
     for (const part of responseParts) {
-      if (part.inline_data) {
-        const mime = part.inline_data.mime_type || "image/png";
-        resultImage = `data:${mime};base64,${part.inline_data.data}`;
+      const inline = part.inlineData ?? part.inline_data;
+      if (inline?.data) {
+        const mime = inline.mimeType || inline.mime_type || "image/png";
+        resultImage = `data:${mime};base64,${inline.data}`;
       } else if (part.text) {
         resultText += part.text;
       }
