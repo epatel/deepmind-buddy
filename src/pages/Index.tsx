@@ -228,132 +228,93 @@ const Index = () => {
           </p>
         </div>
 
-        {/* Upload Your Photo - moved to top */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="space-y-4">
-             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
-               <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
-               Upload Your Photo
-             </h3>
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                {uploadedImage ? (
-                  <div className="relative group">
-                    <img
-                      src={uploadedImage}
-                      alt="Your photo"
-                      className="w-full aspect-square object-cover"
-                    />
-                    <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        Change Photo
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  isCameraOpen ? (
-                    <div className="aspect-square relative bg-black flex items-center justify-center">
-                      <video
-                        ref={videoRef}
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        playsInline
-                        muted
-                      />
-                      <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4">
-                        <Button
-                          variant="secondary"
-                          size="icon"
-                          className="h-12 w-12 rounded-full"
-                          onClick={closeCamera}
-                        >
-                          <X className="h-5 w-5" />
-                        </Button>
-                        <Button
-                          className="h-16 w-16 rounded-full"
-                          onClick={capturePhoto}
-                        >
-                          <Camera className="h-7 w-7" />
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                  <div
-                    className="aspect-square flex flex-col items-center justify-center gap-4 cursor-pointer border-2 border-dashed border-border rounded-lg m-4 hover:border-primary/50 transition-colors"
-                    onDrop={handleDrop}
-                    onDragOver={(e) => e.preventDefault()}
-                  >
-                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                      <Upload className="h-7 w-7 text-muted-foreground" />
-                    </div>
-                    <div className="text-center">
-                       <p className="font-medium text-foreground text-lg">Drop your selfie here</p>
-                       <p className="text-sm text-muted-foreground">This is the face that will be transformed</p>
-                     </div>
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="h-4 w-4" />
-                        Upload
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={openCamera}>
-                        <Camera className="h-4 w-4" />
-                        Take Photo
-                      </Button>
-                    </div>
-                  </div>
-                  )
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Result */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              Result
-            </h3>
-            <Card className="overflow-hidden">
-              <CardContent className="p-0">
-                {resultImage ? (
+        {/* Upload Your Photo */}
+        <div className="max-w-md mx-auto space-y-4">
+           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+             <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+             Upload Your Photo
+           </h3>
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              {uploadedImage ? (
+                <div className="relative group">
                   <img
-                    src={resultImage}
-                    alt="Transformed hairstyle"
+                    src={uploadedImage}
+                    alt="Your photo"
                     className="w-full aspect-square object-cover"
                   />
-                ) : (
-                  <div className="aspect-square flex flex-col items-center justify-center gap-4 bg-muted/30">
-                    <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                      <Sparkles className="h-7 w-7 text-muted-foreground" />
-                    </div>
-                    <div className="text-center px-8">
-                      <p className="font-medium text-foreground">Your new look appears here</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Upload a photo and pick a style to get started
-                      </p>
+                  <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      Change Photo
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                isCameraOpen ? (
+                  <div className="aspect-square relative bg-black flex items-center justify-center">
+                    <video
+                      ref={videoRef}
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      playsInline
+                      muted
+                    />
+                    <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4">
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="h-12 w-12 rounded-full"
+                        onClick={closeCamera}
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        className="h-16 w-16 rounded-full"
+                        onClick={capturePhoto}
+                      >
+                        <Camera className="h-7 w-7" />
+                      </Button>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {resultImage && (
-              <Button variant="outline" className="w-full" onClick={handleDownload}>
-                <Download className="h-4 w-4" />
-                Download Result
-              </Button>
-            )}
-          </div>
+                ) : (
+                <div
+                  className="aspect-square flex flex-col items-center justify-center gap-4 cursor-pointer border-2 border-dashed border-border rounded-lg m-4 hover:border-primary/50 transition-colors"
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                >
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                    <Upload className="h-7 w-7 text-muted-foreground" />
+                  </div>
+                  <div className="text-center">
+                     <p className="font-medium text-foreground text-lg">Drop your selfie here</p>
+                     <p className="text-sm text-muted-foreground">This is the face that will be transformed</p>
+                   </div>
+                  <div className="flex gap-3">
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4" />
+                      Upload
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={openCamera}>
+                      <Camera className="h-4 w-4" />
+                      Take Photo
+                    </Button>
+                  </div>
+                </div>
+                )
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         <div className="space-y-4">
