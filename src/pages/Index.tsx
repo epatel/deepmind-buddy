@@ -204,6 +204,8 @@ const Index = () => {
     if (refImageInputRef.current) refImageInputRef.current.value = "";
   };
 
+  const [showQr, setShowQr] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
