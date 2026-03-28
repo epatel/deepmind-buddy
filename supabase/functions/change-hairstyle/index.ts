@@ -103,13 +103,34 @@ serve(async (req) => {
     const { response, model } = await callGeminiWithFallback(parts, GOOGLE_API_KEY);
 
     if (!response.ok) {
+      const text = await response.text();
+
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please wait a moment and try again." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const text = await response.text();
+
+      if (response.status === 401) {
+        return new Response(
+          JSON.stringify({ error: "Google API key is invalid or unauthorized for Gemini API." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (response.status === 403) {
+        const isServiceDisabled = text.includes("SERVICE_DISABLED") || text.includes("Generative Language API has not been used") || text.includes("generativelanguage.googleapis.com");
+        return new Response(
+          JSON.stringify({
+            error: isServiceDisabled
+              ? "Google Generative Language API is disabled for this API key's project. Enable it in Google Cloud Console and retry in a few minutes."
+              : "Google API key does not have permission to use Gemini image generation."
+          }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       console.error(`Gemini API error (${model}):`, response.status, text);
       return new Response(
         JSON.stringify({ error: "AI processing failed. Please try again." }),
