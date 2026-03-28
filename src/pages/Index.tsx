@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X } from "lucide-react";
+import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -60,9 +60,12 @@ const Index = () => {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedTechnique, setSelectedTechnique] = useState<string | null>(null);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const refImageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -141,8 +144,8 @@ const Index = () => {
       toast.error("Please upload a photo first");
       return;
     }
-    if (!selectedStyle && !customPrompt.trim()) {
-      toast.error("Select a hairstyle or describe one");
+    if (!selectedStyle && !customPrompt.trim() && !referenceImage) {
+      toast.error("Select a hairstyle, describe one, or add a reference image");
       return;
     }
 
@@ -158,6 +161,7 @@ const Index = () => {
           hairstyle: selectedStyle,
           hairColor: selectedColorLabel || undefined,
           colorTechnique: selectedTechniqueObj ? selectedTechniqueObj.label : undefined,
+          referenceImage: referenceImage || undefined,
           customPrompt: customPrompt.trim() || undefined,
         },
       });
@@ -193,8 +197,10 @@ const Index = () => {
     setSelectedStyle(null);
     setSelectedColor(null);
     setSelectedTechnique(null);
+    setReferenceImage(null);
     setCustomPrompt("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+    if (refImageInputRef.current) refImageInputRef.current.value = "";
   };
 
   return (
