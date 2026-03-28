@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, hairstyle, customPrompt } = await req.json();
+    const { imageBase64, hairstyle, hairColor, customPrompt } = await req.json();
 
     if (!imageBase64) {
       return new Response(
@@ -26,9 +26,11 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    const colorInstruction = hairColor ? ` Change the hair color to ${hairColor}.` : "";
+
     const prompt = customPrompt
-      ? `Change this person's hairstyle to: ${customPrompt}. Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle. Make it look natural and realistic.`
-      : `Change this person's hairstyle to a ${hairstyle} style. Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle. Make it look natural and realistic.`;
+      ? `Change this person's hairstyle to: ${customPrompt}.${colorInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`
+      : `Change this person's hairstyle to a ${hairstyle} style.${colorInstruction} Keep the person's face, skin tone, and all other features exactly the same. Only change the hairstyle and hair color. Make it look natural and realistic.`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
