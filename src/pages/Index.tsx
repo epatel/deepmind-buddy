@@ -218,6 +218,9 @@ const Index = () => {
             <h1 className="text-xl font-bold text-foreground tracking-tight">HairSwap AI</h1>
             <p className="text-xs text-muted-foreground">Powered by Google AI</p>
           </div>
+          <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setShowQr(true)}>
+            <QrCode className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
