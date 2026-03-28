@@ -582,6 +582,12 @@ const Index = () => {
           )}
         </div>
       </main>
+      <Dialog open={showQr} onOpenChange={setShowQr}>
+        <DialogContent className="sm:max-w-xs flex flex-col items-center gap-4">
+          <DialogTitle className="text-center text-foreground">Scan QR Code</DialogTitle>
+          <img src={qrCodeImage} alt="QR Code" className="w-full max-w-[240px]" />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
