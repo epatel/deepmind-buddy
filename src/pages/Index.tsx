@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2 } from "lucide-react";
+import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -32,7 +32,47 @@ const Index = () => {
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const openCamera = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1024 }, height: { ideal: 1024 } },
+      });
+      streamRef.current = stream;
+      setIsCameraOpen(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 100);
+    } catch {
+      toast.error("Could not access camera. Please check permissions.");
+    }
+  }, []);
+
+  const closeCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setIsCameraOpen(false);
+  }, []);
+
+  const capturePhoto = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d")?.drawImage(video, 0, 0);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    setUploadedImage(dataUrl);
+    setResultImage(null);
+    closeCamera();
+  }, [closeCamera]);
 
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -229,9 +269,35 @@ const Index = () => {
                     </div>
                   </div>
                 ) : (
+                  isCameraOpen ? (
+                    <div className="aspect-square relative bg-black flex items-center justify-center">
+                      <video
+                        ref={videoRef}
+                        className="w-full h-full object-cover"
+                        autoPlay
+                        playsInline
+                        muted
+                      />
+                      <div className="absolute bottom-4 inset-x-0 flex items-center justify-center gap-4">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-12 w-12 rounded-full"
+                          onClick={closeCamera}
+                        >
+                          <X className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          className="h-16 w-16 rounded-full"
+                          onClick={capturePhoto}
+                        >
+                          <Camera className="h-7 w-7" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
                   <div
                     className="aspect-square flex flex-col items-center justify-center gap-4 cursor-pointer border-2 border-dashed border-border rounded-lg m-4 hover:border-primary/50 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
                     onDrop={handleDrop}
                     onDragOver={(e) => e.preventDefault()}
                   >
@@ -240,9 +306,20 @@ const Index = () => {
                     </div>
                     <div className="text-center">
                       <p className="font-medium text-foreground">Drop your photo here</p>
-                      <p className="text-sm text-muted-foreground">or click to browse</p>
+                      <p className="text-sm text-muted-foreground">or use the buttons below</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="h-4 w-4" />
+                        Upload
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={openCamera}>
+                        <Camera className="h-4 w-4" />
+                        Take Photo
+                      </Button>
                     </div>
                   </div>
+                  )
                 )}
                 <input
                   ref={fileInputRef}
