@@ -26,10 +26,26 @@ const HAIRSTYLES = [
   { id: "buzz", label: "Buzz Cut", image: hairstyleBuzz },
 ];
 
+const HAIR_COLORS = [
+  { id: "natural-black", label: "Natural Black", hex: "#1a1a1a" },
+  { id: "dark-brown", label: "Dark Brown", hex: "#3b2314" },
+  { id: "medium-brown", label: "Medium Brown", hex: "#6b3a2a" },
+  { id: "light-brown", label: "Light Brown", hex: "#8b6340" },
+  { id: "golden-blonde", label: "Golden Blonde", hex: "#c8a24e" },
+  { id: "platinum-blonde", label: "Platinum Blonde", hex: "#e8d8b8" },
+  { id: "strawberry-blonde", label: "Strawberry Blonde", hex: "#c47a4a" },
+  { id: "auburn", label: "Auburn", hex: "#7a2e1a" },
+  { id: "copper-red", label: "Copper Red", hex: "#b34222" },
+  { id: "burgundy", label: "Burgundy", hex: "#6b1a3a" },
+  { id: "silver-grey", label: "Silver Grey", hex: "#b0b0b0" },
+  { id: "pastel-pink", label: "Pastel Pink", hex: "#e8a0b0" },
+];
+
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -228,6 +244,42 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Hair Color Selection */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Hair Color <span className="text-muted-foreground font-normal normal-case">(optional)</span>
+            </h3>
+            {selectedColor && (
+              <button
+                onClick={() => setSelectedColor(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {HAIR_COLORS.map((color) => (
+              <button
+                key={color.id}
+                onClick={() => setSelectedColor(selectedColor === color.id ? null : color.id)}
+                className={`group flex items-center gap-2 px-3 py-2 rounded-full border-2 transition-all text-sm ${
+                  selectedColor === color.id
+                    ? "border-primary ring-2 ring-primary/20 shadow-sm"
+                    : "border-border hover:border-primary/40"
+                }`}
+                title={color.label}
+              >
+                <span
+                  className="h-5 w-5 rounded-full border border-border/50 shrink-0"
+                  style={{ backgroundColor: color.hex }}
+                />
+                <span className="font-medium text-foreground">{color.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
         {/* Custom Prompt */}
         <div className="space-y-2 max-w-xl">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
