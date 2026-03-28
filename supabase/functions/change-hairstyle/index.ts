@@ -6,15 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const GCP_PROJECT = "test-altool";
+const GCP_REGION = "europe-west4";
+
 function base64ToGeminiPart(dataUrl: string) {
-  // dataUrl can be "data:image/jpeg;base64,..." or raw base64
   if (dataUrl.startsWith("data:")) {
     const match = dataUrl.match(/^data:(.+?);base64,(.+)$/s);
     if (match) {
       return { inlineData: { mimeType: match[1], data: match[2] } };
     }
   }
-  // Assume JPEG if no prefix
   return { inlineData: { mimeType: "image/jpeg", data: dataUrl } };
 }
 
@@ -24,7 +25,42 @@ const IMAGE_MODELS = [
   "gemini-2.5-flash-image",
 ] as const;
 
-async function callGeminiWithFallback(parts: any[], apiKey: string) {
+const requestBody = (parts: any[]) => ({
+  contents: [{ role: "user", parts }],
+  generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+});
+
+// Primary: Vertex AI
+async function callVertexAI(parts: any[], apiKey: string) {
+  let lastStatus = 0;
+  let lastBody = "";
+
+  for (const model of IMAGE_MODELS) {
+    const url = `https://${GCP_REGION}-aiplatform.googleapis.com/v1beta1/projects/${GCP_PROJECT}/locations/${GCP_REGION}/publishers/google/models/${model}:generateContent`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      body: JSON.stringify(requestBody(parts)),
+    });
+
+    if (response.status === 404) {
+      lastStatus = 404;
+      lastBody = await response.text();
+      console.warn(`Vertex AI model unavailable: ${model}`);
+      continue;
+    }
+
+    return { response, model, provider: "vertex" as const };
+  }
+
+  throw new Error(`Vertex AI: no model found. Last: ${lastStatus} ${lastBody}`);
+}
+
+// Fallback: Generative Language API
+async function callGenerativeLanguage(parts: any[], apiKey: string) {
   let lastStatus = 0;
   let lastBody = "";
 
@@ -36,25 +72,39 @@ async function callGeminiWithFallback(parts: any[], apiKey: string) {
         "Content-Type": "application/json",
         "x-goog-api-key": apiKey,
       },
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-        },
-      }),
+      body: JSON.stringify(requestBody(parts)),
     });
 
     if (response.status === 404) {
       lastStatus = 404;
       lastBody = await response.text();
-      console.warn(`Gemini model unavailable: ${model}`);
+      console.warn(`GenLang model unavailable: ${model}`);
       continue;
     }
 
-    return { response, model };
+    return { response, model, provider: "genlang" as const };
   }
 
-  throw new Error(`No supported Gemini image model found. Last status: ${lastStatus}. Last body: ${lastBody}`);
+  throw new Error(`GenLang: no model found. Last: ${lastStatus} ${lastBody}`);
+}
+
+async function callWithFallback(parts: any[], vertexKey: string, genlangKey: string) {
+  // Try Vertex AI first
+  try {
+    const result = await callVertexAI(parts, vertexKey);
+    if (result.response.ok || (result.response.status !== 429 && result.response.status !== 500 && result.response.status !== 503)) {
+      console.log(`Using Vertex AI model: ${result.model}`);
+      return result;
+    }
+    const body = await result.response.text();
+    console.warn(`Vertex AI returned ${result.response.status}, falling back to GenLang. Body: ${body}`);
+  } catch (e) {
+    console.warn(`Vertex AI failed: ${e}, falling back to GenLang`);
+  }
+
+  // Fallback to Generative Language API
+  console.log("Falling back to Generative Language API");
+  return await callGenerativeLanguage(parts, genlangKey);
 }
 
 serve(async (req) => {
@@ -72,9 +122,11 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
-      throw new Error("GOOGLE_API_KEY is not configured");
+    const VERTEX_KEY = Deno.env.get("GOOGLE_VERTEX_API_KEY");
+    const GENLANG_KEY = Deno.env.get("GOOGLE_API_KEY");
+
+    if (!VERTEX_KEY && !GENLANG_KEY) {
+      throw new Error("No Google API keys configured");
     }
 
     const colorInstruction = hairColor ? ` Change the hair color to ${hairColor}.` : "";
@@ -100,7 +152,16 @@ serve(async (req) => {
       );
     }
 
-    const { response, model } = await callGeminiWithFallback(parts, GOOGLE_API_KEY);
+    let result;
+    if (VERTEX_KEY && GENLANG_KEY) {
+      result = await callWithFallback(parts, VERTEX_KEY, GENLANG_KEY);
+    } else if (VERTEX_KEY) {
+      result = await callVertexAI(parts, VERTEX_KEY);
+    } else {
+      result = await callGenerativeLanguage(parts, GENLANG_KEY!);
+    }
+
+    const { response, model, provider } = result;
 
     if (!response.ok) {
       const text = await response.text();
@@ -114,24 +175,19 @@ serve(async (req) => {
 
       if (response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Google API key is invalid or unauthorized for Gemini API." }),
+          JSON.stringify({ error: `API key is invalid or unauthorized (${provider}).` }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       if (response.status === 403) {
-        const isServiceDisabled = text.includes("SERVICE_DISABLED") || text.includes("Generative Language API has not been used") || text.includes("generativelanguage.googleapis.com");
         return new Response(
-          JSON.stringify({
-            error: isServiceDisabled
-              ? "Google Generative Language API is disabled for this API key's project. Enable it in Google Cloud Console and retry in a few minutes."
-              : "Google API key does not have permission to use Gemini image generation."
-          }),
+          JSON.stringify({ error: `API not enabled or insufficient permissions (${provider}). Check Google Cloud Console.` }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      console.error(`Gemini API error (${model}):`, response.status, text);
+      console.error(`API error (${provider}/${model}):`, response.status, text);
       return new Response(
         JSON.stringify({ error: "AI processing failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -141,7 +197,6 @@ serve(async (req) => {
     const data = await response.json();
     const responseParts = data.candidates?.[0]?.content?.parts || [];
 
-    // Find the image part in the response
     let resultImage: string | null = null;
     let resultText = "";
 
