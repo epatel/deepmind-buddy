@@ -41,11 +41,25 @@ const HAIR_COLORS = [
   { id: "pastel-pink", label: "Pastel Pink", hex: "#e8a0b0" },
 ];
 
+const COLOR_TECHNIQUES = [
+  { id: "ombre", label: "Ombré", desc: "Dark roots fading to lighter ends" },
+  { id: "balayage", label: "Balayage", desc: "Hand-painted natural highlights" },
+  { id: "highlights", label: "Highlights", desc: "Lighter streaks throughout" },
+  { id: "lowlights", label: "Lowlights", desc: "Darker streaks for depth" },
+  { id: "streaks", label: "Streaks", desc: "Bold contrasting color streaks" },
+  { id: "dip-dye", label: "Dip Dye", desc: "Vivid color on the ends only" },
+  { id: "roots", label: "Shadow Roots", desc: "Dark roots blending into color" },
+  { id: "money-piece", label: "Money Piece", desc: "Face-framing highlights" },
+  { id: "split", label: "Split Dye", desc: "Two-tone half-and-half color" },
+  { id: "peekaboo", label: "Peekaboo", desc: "Hidden color under top layer" },
+];
+
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedTechnique, setSelectedTechnique] = useState<string | null>(null);
   const [customPrompt, setCustomPrompt] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -137,11 +151,13 @@ const Index = () => {
 
     try {
       const selectedColorLabel = HAIR_COLORS.find((c) => c.id === selectedColor)?.label;
+      const selectedTechniqueObj = COLOR_TECHNIQUES.find((t) => t.id === selectedTechnique);
       const { data, error } = await supabase.functions.invoke("change-hairstyle", {
         body: {
           imageBase64: uploadedImage,
           hairstyle: selectedStyle,
           hairColor: selectedColorLabel || undefined,
+          colorTechnique: selectedTechniqueObj ? selectedTechniqueObj.label : undefined,
           customPrompt: customPrompt.trim() || undefined,
         },
       });
@@ -176,6 +192,7 @@ const Index = () => {
     setResultImage(null);
     setSelectedStyle(null);
     setSelectedColor(null);
+    setSelectedTechnique(null);
     setCustomPrompt("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -283,6 +300,40 @@ const Index = () => {
             ))}
           </div>
         </div>
+
+        {/* Color Technique */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Coloring Technique <span className="text-muted-foreground font-normal normal-case">(optional)</span>
+            </h3>
+            {selectedTechnique && (
+              <button
+                onClick={() => setSelectedTechnique(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {COLOR_TECHNIQUES.map((tech) => (
+              <button
+                key={tech.id}
+                onClick={() => setSelectedTechnique(selectedTechnique === tech.id ? null : tech.id)}
+                className={`flex flex-col items-start gap-0.5 px-3 py-2.5 rounded-xl border-2 transition-all text-left ${
+                  selectedTechnique === tech.id
+                    ? "border-primary ring-2 ring-primary/20 shadow-sm bg-primary/5"
+                    : "border-border hover:border-primary/40 bg-card"
+                }`}
+              >
+                <span className="text-sm font-semibold text-foreground">{tech.label}</span>
+                <span className="text-xs text-muted-foreground leading-tight">{tech.desc}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Custom Prompt */}
         <div className="space-y-2 max-w-xl">
           <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
