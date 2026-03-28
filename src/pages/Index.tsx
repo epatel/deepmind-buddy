@@ -273,7 +273,7 @@ const Index = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              <span className="flex items-center gap-1.5">📷 Copy Style From a Photo</span> <span className="text-muted-foreground font-normal normal-case">(optional — instead of picking above)</span>
+              Or Copy a Style From a Photo <span className="text-muted-foreground font-normal normal-case">(optional)</span>
             </h3>
             {referenceImage && (
               <button
@@ -300,31 +300,14 @@ const Index = () => {
               </p>
             </div>
           ) : (
-            <div
-              className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-border hover:border-primary/50 transition-colors cursor-pointer"
+            <Button
+              variant="outline"
+              className="w-full h-12 gap-2"
               onClick={() => refImageInputRef.current?.click()}
-              onDrop={(e) => {
-                e.preventDefault();
-                const file = e.dataTransfer.files[0];
-                if (file && file.type.startsWith("image/")) {
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    setReferenceImage(ev.target?.result as string);
-                    setSelectedStyle(null);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-              onDragOver={(e) => e.preventDefault()}
             >
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center shrink-0">
-                <ImagePlus className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-               <p className="font-medium text-foreground text-sm">Drop a hairstyle inspiration photo</p>
-                 <p className="text-xs text-muted-foreground">Not your selfie — a photo of the hairstyle you want</p>
-              </div>
-            </div>
+              <ImagePlus className="h-5 w-5" />
+              Upload a Hairstyle Inspiration Photo
+            </Button>
           )}
           <input
             ref={refImageInputRef}
