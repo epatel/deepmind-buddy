@@ -136,10 +136,12 @@ const Index = () => {
     setResultImage(null);
 
     try {
+      const selectedColorLabel = HAIR_COLORS.find((c) => c.id === selectedColor)?.label;
       const { data, error } = await supabase.functions.invoke("change-hairstyle", {
         body: {
           imageBase64: uploadedImage,
           hairstyle: selectedStyle,
+          hairColor: selectedColorLabel || undefined,
           customPrompt: customPrompt.trim() || undefined,
         },
       });
