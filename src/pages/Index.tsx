@@ -6,15 +6,24 @@ import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2 } from "lucide
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+import hairstyleBob from "@/assets/hairstyle-bob.jpg";
+import hairstyleCurly from "@/assets/hairstyle-curly.jpg";
+import hairstylePixie from "@/assets/hairstyle-pixie.jpg";
+import hairstyleBraids from "@/assets/hairstyle-braids.jpg";
+import hairstyleMohawk from "@/assets/hairstyle-mohawk.jpg";
+import hairstyleLongStraight from "@/assets/hairstyle-long-straight.jpg";
+import hairstyleAfro from "@/assets/hairstyle-afro.jpg";
+import hairstyleBuzz from "@/assets/hairstyle-buzz.jpg";
+
 const HAIRSTYLES = [
-  { id: "bob", label: "Bob Cut", emoji: "💇‍♀️" },
-  { id: "curly", label: "Curly", emoji: "🌀" },
-  { id: "pixie", label: "Pixie Cut", emoji: "✂️" },
-  { id: "braids", label: "Braids", emoji: "🎀" },
-  { id: "mohawk", label: "Mohawk", emoji: "🦅" },
-  { id: "long-straight", label: "Long & Straight", emoji: "🪮" },
-  { id: "afro", label: "Afro", emoji: "🌟" },
-  { id: "buzz", label: "Buzz Cut", emoji: "⚡" },
+  { id: "bob", label: "Bob Cut", image: hairstyleBob },
+  { id: "curly", label: "Curly", image: hairstyleCurly },
+  { id: "pixie", label: "Pixie Cut", image: hairstylePixie },
+  { id: "braids", label: "Braids", image: hairstyleBraids },
+  { id: "mohawk", label: "Mohawk", image: hairstyleMohawk },
+  { id: "long-straight", label: "Long & Straight", image: hairstyleLongStraight },
+  { id: "afro", label: "Afro", image: hairstyleAfro },
+  { id: "buzz", label: "Buzz Cut", image: hairstyleBuzz },
 ];
 
 const Index = () => {
@@ -138,10 +147,68 @@ const Index = () => {
           </p>
         </div>
 
+        {/* Hairstyle Selection Grid */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+            Choose a Style
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {HAIRSTYLES.map((style) => (
+              <button
+                key={style.id}
+                onClick={() => {
+                  setSelectedStyle(style.id);
+                  setCustomPrompt("");
+                }}
+                className={`group relative overflow-hidden rounded-xl border-2 transition-all ${
+                  selectedStyle === style.id
+                    ? "border-primary ring-2 ring-primary/20 shadow-md"
+                    : "border-border hover:border-primary/40"
+                }`}
+              >
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={style.image}
+                    alt={style.label}
+                    loading="lazy"
+                    width={512}
+                    height={512}
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                  />
+                </div>
+                <div className={`absolute bottom-0 inset-x-0 px-2 py-2 text-center text-sm font-semibold transition-colors ${
+                  selectedStyle === style.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background/90 text-foreground backdrop-blur-sm"
+                }`}>
+                  {style.label}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Prompt */}
+        <div className="space-y-2 max-w-xl">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+            Or Describe Your Own
+          </h3>
+          <Input
+            placeholder="e.g. Wavy beach hair with blonde highlights"
+            value={customPrompt}
+            onChange={(e) => {
+              setCustomPrompt(e.target.value);
+              if (e.target.value) setSelectedStyle(null);
+            }}
+          />
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left: Upload + Controls */}
-          <div className="space-y-6">
-            {/* Upload Area */}
+          {/* Left: Upload */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Your Photo
+            </h3>
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 {uploadedImage ? (
@@ -187,47 +254,6 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            {/* Hairstyle Picker */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                Choose a Style
-              </h3>
-              <div className="grid grid-cols-4 gap-2">
-                {HAIRSTYLES.map((style) => (
-                  <button
-                    key={style.id}
-                    onClick={() => {
-                      setSelectedStyle(style.id);
-                      setCustomPrompt("");
-                    }}
-                    className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all text-sm ${
-                      selectedStyle === style.id
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border hover:border-primary/30 bg-card"
-                    }`}
-                  >
-                    <span className="text-xl">{style.emoji}</span>
-                    <span className="text-xs font-medium text-foreground">{style.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Prompt */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                Or Describe It
-              </h3>
-              <Input
-                placeholder="e.g. Wavy beach hair with blonde highlights"
-                value={customPrompt}
-                onChange={(e) => {
-                  setCustomPrompt(e.target.value);
-                  if (e.target.value) setSelectedStyle(null);
-                }}
-              />
-            </div>
-
             {/* Action Buttons */}
             <div className="flex gap-3">
               <Button
@@ -257,6 +283,9 @@ const Index = () => {
 
           {/* Right: Result */}
           <div className="space-y-4">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              Result
+            </h3>
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 {resultImage ? (
