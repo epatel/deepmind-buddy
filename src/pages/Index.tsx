@@ -522,7 +522,7 @@ const Index = () => {
               <Button
                 className="flex-1 h-12 text-base font-semibold"
                 onClick={handleTransform}
-                disabled={isProcessing || !uploadedImage || (!selectedStyle && !customPrompt.trim())}
+                disabled={isProcessing || !uploadedImage || (!selectedStyle && !customPrompt.trim() && !referenceImage)}
               >
                 {isProcessing ? (
                   <>
