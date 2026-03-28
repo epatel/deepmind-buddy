@@ -273,7 +273,7 @@ const Index = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              Or Copy From a Photo <span className="text-muted-foreground font-normal normal-case">(optional)</span>
+              <span className="flex items-center gap-1.5">📷 Copy Style From a Photo</span> <span className="text-muted-foreground font-normal normal-case">(optional — instead of picking above)</span>
             </h3>
             {referenceImage && (
               <button
@@ -321,8 +321,8 @@ const Index = () => {
                 <ImagePlus className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-foreground text-sm">Drop a reference photo here</p>
-                <p className="text-xs text-muted-foreground">Upload a photo of the hairstyle you want to copy</p>
+               <p className="font-medium text-foreground text-sm">Drop a hairstyle inspiration photo</p>
+                 <p className="text-xs text-muted-foreground">Not your selfie — a photo of the hairstyle you want</p>
               </div>
             </div>
           )}
@@ -432,9 +432,10 @@ const Index = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Left: Upload */}
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              Your Photo
-            </h3>
+             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
+               <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold">1</span>
+               Upload Your Photo
+             </h3>
             <Card className="overflow-hidden">
               <CardContent className="p-0">
                 {uploadedImage ? (
@@ -491,9 +492,9 @@ const Index = () => {
                       <Upload className="h-7 w-7 text-muted-foreground" />
                     </div>
                     <div className="text-center">
-                      <p className="font-medium text-foreground">Drop your photo here</p>
-                      <p className="text-sm text-muted-foreground">or use the buttons below</p>
-                    </div>
+                       <p className="font-medium text-foreground text-lg">Drop your selfie here</p>
+                       <p className="text-sm text-muted-foreground">This is the face that will be transformed</p>
+                     </div>
                     <div className="flex gap-3">
                       <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                         <Upload className="h-4 w-4" />
