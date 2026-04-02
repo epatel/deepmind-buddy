@@ -16,8 +16,9 @@ import hairstyleMohawk from "@/assets/hairstyle-mohawk.jpg";
 import hairstyleLongStraight from "@/assets/hairstyle-long-straight.jpg";
 import hairstyleAfro from "@/assets/hairstyle-afro.jpg";
 import hairstyleBuzz from "@/assets/hairstyle-buzz.jpg";
+import hairstylePaskkarring from "@/assets/hairstyle-paskkarring.jpg";
 
-const HAIRSTYLES = [
+const BASE_HAIRSTYLES = [
   { id: "bob", label: "Bob Cut", image: hairstyleBob },
   { id: "curly", label: "Curly", image: hairstyleCurly },
   { id: "pixie", label: "Pixie Cut", image: hairstylePixie },
@@ -26,6 +27,22 @@ const HAIRSTYLES = [
   { id: "long-straight", label: "Long & Straight", image: hairstyleLongStraight },
   { id: "afro", label: "Afro", image: hairstyleAfro },
   { id: "buzz", label: "Buzz Cut", image: hairstyleBuzz },
+];
+
+const SEASONAL_HAIRSTYLES = [
+  {
+    id: "paskkarring",
+    label: "Påskkärring",
+    image: hairstylePaskkarring,
+    customPrompt: "Utklädnad: Huckle, förkläde, målade röda kinder och fräknar, samt kvast.",
+    expiry: new Date("2026-04-07T00:00:00"), // available through April 6, 2026
+  },
+];
+
+const now = new Date();
+const HAIRSTYLES = [
+  ...SEASONAL_HAIRSTYLES.filter((s) => now < s.expiry),
+  ...BASE_HAIRSTYLES,
 ];
 
 const HAIR_COLORS = [
@@ -334,7 +351,8 @@ const Index = () => {
                 key={style.id}
                 onClick={() => {
                   setSelectedStyle(style.id);
-                  setCustomPrompt("");
+                  const seasonal = SEASONAL_HAIRSTYLES.find((s) => s.id === style.id);
+                  setCustomPrompt(seasonal?.customPrompt ?? "");
                 }}
                 className={`group relative overflow-hidden rounded-xl border-2 transition-all ${
                   selectedStyle === style.id
