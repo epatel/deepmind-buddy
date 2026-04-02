@@ -351,7 +351,8 @@ const Index = () => {
                 key={style.id}
                 onClick={() => {
                   setSelectedStyle(style.id);
-                  setCustomPrompt("");
+                  const seasonal = SEASONAL_HAIRSTYLES.find((s) => s.id === style.id);
+                  setCustomPrompt(seasonal?.customPrompt ?? "");
                 }}
                 className={`group relative overflow-hidden rounded-xl border-2 transition-all ${
                   selectedStyle === style.id
