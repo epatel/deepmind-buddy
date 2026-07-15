@@ -113,7 +113,14 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, hairstyle, hairColor, colorTechnique, referenceImage, customPrompt } = await req.json();
+    const body = await req.json();
+    if (body.ping) {
+      return new Response(
+        JSON.stringify({ ok: true }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const { imageBase64, hairstyle, hairColor, colorTechnique, referenceImage, customPrompt } = body;
 
     if (!imageBase64) {
       return new Response(

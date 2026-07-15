@@ -227,6 +227,7 @@ const Index = () => {
   useEffect(() => {
     supabase.functions
       .invoke("change-hairstyle", { body: { ping: true } })
+      .then(() => setBackendDown(false))
       .catch(() => setBackendDown(true));
   }, []);
 
