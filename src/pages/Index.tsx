@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus, QrCode } from "lucide-react";
+import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus, QrCode, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import qrCodeImage from "@/assets/qr-code.png";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -222,6 +223,13 @@ const Index = () => {
   };
 
   const [showQr, setShowQr] = useState(false);
+  const [backendDown, setBackendDown] = useState(false);
+
+  useEffect(() => {
+    supabase.functions
+      .invoke("change-hairstyle", { body: { ping: true } })
+      .catch(() => setBackendDown(true));
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
