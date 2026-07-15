@@ -222,14 +222,7 @@ const Index = () => {
   };
 
   const [showQr, setShowQr] = useState(false);
-  const [backendDown, setBackendDown] = useState(false);
-
-  useEffect(() => {
-    supabase.functions
-      .invoke("change-hairstyle", { body: { ping: true } })
-      .then(() => setBackendDown(false))
-      .catch(() => setBackendDown(true));
-  }, []);
+  const [backendDown, setBackendDown] = useState(true);
 
   if (backendDown) {
     return (
