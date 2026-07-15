@@ -230,9 +230,9 @@ const Index = () => {
         <div className="h-20 w-20 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
           <AlertTriangle className="h-10 w-10 text-destructive" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-3">Sorry, service not available</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-3">We have run out of tokens.</h1>
         <p className="text-muted-foreground max-w-md">
-          Our backend is currently unreachable. Please try again later.
+          Please come back later when the service is refilled.
         </p>
       </div>
     );
