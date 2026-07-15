@@ -1,12 +1,12 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus, QrCode } from "lucide-react";
+import { Scissors, Upload, Sparkles, Download, RotateCcw, Loader2, Camera, X, ImagePlus, QrCode, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
 import qrCodeImage from "@/assets/qr-code.png";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 import hairstyleBob from "@/assets/hairstyle-bob.jpg";
 import hairstyleCurly from "@/assets/hairstyle-curly.jpg";
@@ -222,6 +222,28 @@ const Index = () => {
   };
 
   const [showQr, setShowQr] = useState(false);
+  const [backendDown, setBackendDown] = useState(false);
+
+  useEffect(() => {
+    supabase.functions
+      .invoke("change-hairstyle", { body: { ping: true } })
+      .then(() => setBackendDown(false))
+      .catch(() => setBackendDown(true));
+  }, []);
+
+  if (backendDown) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
+        <div className="h-20 w-20 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
+          <AlertTriangle className="h-10 w-10 text-destructive" />
+        </div>
+        <h1 className="text-3xl font-bold text-foreground mb-3">Sorry, service not available</h1>
+        <p className="text-muted-foreground max-w-md">
+          Our backend is currently unreachable. Please try again later.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
